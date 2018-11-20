@@ -89,12 +89,14 @@ def predict_with_knn(ts, column, w, k, train_size, debug=False, cluster_label=No
         if real_value:
             # Adicionando o valor real
             X.loc[i] = Y.loc[i][0]        
+            X_norm.loc[i] = normalization.transform([X.loc[i]])[0]
         else:
             # Adicionando o valor previsto
-            X.loc[i] = predictions[-1]
+            # X.loc[i] = predictions[-1]
+            X.loc[i] = Y.loc[i][0]
+            X_norm.loc[i] = predictions[-1]
 
         X_to_return.loc[i] = Y.loc[i][0]
-        X_norm.loc[i] = normalization.transform([X.loc[i]])[0]
         S.loc[len(S)] = get_most_recent_window(X_norm, w).T.iloc[:, 0]
         S_backtracking.loc[len(S_backtracking)] = get_most_recent_window(X, w).T.iloc[:, 0]
     
@@ -183,12 +185,14 @@ def predict_with_cluster_knn(ts, column, cluster_labels, w, k, train_size, debug
         if real_value:
             # Adicionando o valor real
             X.loc[i] = (Y.loc[i])[0]
+            X_norm.loc[i] = normalization.transform([X.loc[i]])[0]
         else:
             # Adicionando o valor previsto
-            X.loc[i] = predictions[-1]
+            # X.loc[i] = predictions[-1]
+            X.loc[i] = Y.loc[i][0]
+            X_norm.loc[i] = predictions[-1]
 
         X_to_return.loc[i] = Y.loc[i][0]
-        X_norm.loc[i] = normalization.transform([X.loc[i]])[0]
         S.loc[len(S)] = get_most_recent_window(X_norm, w).T.iloc[:, 0]
         S_backtracking.loc[len(S_backtracking)] = get_most_recent_window(X, w).T.iloc[:, 0]
     

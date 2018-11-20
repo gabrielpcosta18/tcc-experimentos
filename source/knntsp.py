@@ -186,7 +186,7 @@ def predict_with_cluster_knn(ts, column, cluster_labels, w, k, train_size, debug
             X.loc[i] = predictions[-1]
 
         X_to_return.loc[i] = Y.loc[i][0]
-        X_norm.loc[i] = normalization.transform(X.loc[i])[0]
+        X_norm.loc[i] = normalization.transform([X.loc[i]])[0]
         S.loc[len(S)] = get_most_recent_window(X_norm, w).T.iloc[:, 0]
         S_backtracking.loc[len(S_backtracking)] = get_most_recent_window(X, w).T.iloc[:, 0]
     

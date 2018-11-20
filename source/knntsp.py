@@ -73,7 +73,7 @@ def predict_with_knn(ts, column, w, k, train_size, debug=False, cluster_label=No
         norm_value = 0
         for x in class_idx:
             value += S_backtracking.iloc[x][0]
-            norm_value += S.iloc[x][0]-S.iloc[x][1]
+            norm_value += S.iloc[x][0]-S.iloc[x - 1][0]
         
         predictions.append(S.iloc[-1][0] + norm_value/k)
 
@@ -163,18 +163,20 @@ def predict_with_cluster_knn(ts, column, cluster_labels, w, k, train_size, debug
         # Cálculo do valor futuro da sequência de referência utilizando f(S_)
         value = 0
         norm_value = 0
+        
         for x in class_idx:
             value += S_backtracking.iloc[x][0]
-            norm_value += S.iloc[x][0]-S.iloc[x][1]
+            norm_value += S.iloc[x][0]-S.iloc[x - 1][0]
+            # print(S.iloc[x][0]-S.iloc[x][1])
 
         predictions.append(S.iloc[-1][0] + norm_value/k)
 
         if debug:
             plt.figure(figsize=(40,16,))
             plt.title(str(column))
-            plt.plot(X, linestyle='dashdot', marker='o')
+            plt.plot(X_norm, linestyle='dashdot', marker='o')
             for idx in base_idx.values:
-                plt.plot(X.iloc[idx - w + 1: idx + 1], color='black', marker='o')
+                plt.plot(X_norm.iloc[idx - w + 1: idx + 1], color='black', marker='o')
             plt.plot(pd.Series(predictions[-1], index=[i]).T, color='red', marker='o')
             plt.show()
 

@@ -73,14 +73,17 @@ def predict_with_knn(ts, column, w, k, train_size, debug=False, cluster_label=No
         norm_value = 0
         for x in class_idx:
             value += S_backtracking.iloc[x][0]
-            norm_value += S.iloc[x][0]-S.iloc[x - 1][0]
-        
+            norm_value += S.iloc[x][0]-S.iloc[x][1]
+            # norm_value = S.iloc[x][0]
+
         predictions.append(S.iloc[-1][0] + norm_value/k)
+        # predictions.append(norm_value/k)
 
         if debug:
             plt.figure(figsize=(40,16,))
             plt.title(str(column))
             plt.plot(X_norm, linestyle='dashdot', marker='o')
+            plt.plot(X_norm.iloc[-w:], color='green', marker='o')
             for idx in base_idx.values:
                 plt.plot(X_norm.iloc[idx - w + 1: idx + 1], color='black', marker='o')
             plt.plot(pd.Series(predictions[-1], index=[i]).T, color='red', marker='o')
@@ -115,16 +118,16 @@ def predict_with_cluster_knn(ts, column, cluster_labels, w, k, train_size, debug
     
     cluster_label = cluster_labels.iloc[ts.T.index.get_loc(column)][0]
     similar_index = cluster_labels[cluster_labels.label==cluster_label].index.values
-    similars = ts.T.iloc[similar_index].T
+    similars = ts.T.iloc[similar_index].T.drop(columns=[column])
     
     S_similars = pd.DataFrame()
     S_similars_norm = pd.DataFrame()
     for similar in similars:
         current = similars[[similar]].iloc[:begin_index + 1, : ]
         current_norm = pd.DataFrame(StandardScaler().fit_transform(current), index=current.index, columns=current.columns)
-        S_similars_norm = S_similars_norm.append(get_rolling_window(current_norm, w))
+        S_similars_norm = S_similars_norm.append(get_rolling_window(current_norm, w)[w:])
         empty = pd.Series([1000000000]*w)
-        S_similars = S_similars.append(get_rolling_window(current, w))
+        S_similars = S_similars.append(get_rolling_window(current, w)[w:])
         empty[0] = S_similars_norm.iloc[-1][0]
         S_similars_norm.iloc[-1] = pd.Series(empty)
 
@@ -136,9 +139,9 @@ def predict_with_cluster_knn(ts, column, cluster_labels, w, k, train_size, debug
         normalization = StandardScaler()
 
     X_norm = pd.DataFrame(normalization.fit_transform(X), index=X.index, columns=X.columns)
-    S = pd.concat([S_similars_norm, get_rolling_window(X_norm, w)])
-    S_backtracking = pd.concat([S_similars, get_rolling_window(X, w)])
-
+    S = pd.concat([S_similars_norm, get_rolling_window(X_norm, w)[w:]])
+    S_backtracking = pd.concat([S_similars, get_rolling_window(X, w)[w:]])
+    
     for i in Y.index:
         # Definir a sequência de referência U para qual o valor futuro xn + 1
         # não é conhecido
@@ -147,7 +150,7 @@ def predict_with_cluster_knn(ts, column, cluster_labels, w, k, train_size, debug
         # Obtenção das k sequências mais próximas a U, contidas em S,
         # considerando a medida de similaridade Ms e o critério de seleção
         # de vizinhos próximos Ck
-        distances = (S[w - 1:-2] - U).pow(2).sum(1).pow(0.5)                
+        distances = (S[:-1] - U).pow(2).sum(1).pow(0.5)                
 
         # Critério de seleção baseado apenas nos menores
         # base_idx = distances.nsmallest(k).index
@@ -169,10 +172,9 @@ def predict_with_cluster_knn(ts, column, cluster_labels, w, k, train_size, debug
         for x in class_idx:
             value += S_backtracking.iloc[x][0]
             norm_value += S.iloc[x][0]-S.iloc[x - 1][0]
-            # print(S.iloc[x][0]-S.iloc[x][1])
-
+        
         predictions.append(S.iloc[-1][0] + norm_value/k)
-
+        
         if debug:
             plt.figure(figsize=(40,16,))
             plt.title(str(column))
